@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Synapse Type – Cyberpunk Typing Test</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div
+      class="orb"
+      style="
+        width: 380px;
+        height: 380px;
+        background: rgb(var(--c1));
+        top: -80px;
+        left: -100px;
+      "
+    ></div>
+    <div
+      class="orb"
+      style="
+        width: 420px;
+        height: 420px;
+        background: rgb(var(--c2));
+        top: 25%;
+        right: -140px;
+        animation-delay: -4s;
+      "
+    ></div>
+    <div
+      class="orb"
+      style="
+        width: 320px;
+        height: 320px;
+        background: rgb(var(--c3));
+        bottom: 10%;
+        left: 8%;
+        animation-delay: -8s;
+      "
+    ></div>
+    <div class="floor"></div>
+
+    <main class="relative z-10 mx-auto max-w-4xl px-4 py-8 sm:py-12">
+      <header class="text-center mb-8">
+        <h1 class="disp title text-3xl sm:text-5xl font-black tracking-wide">
+          Synapse Type
+        </h1>
+        <p class="mt-2 text-sm text-slate-400">
+          Plug in. Type fast. Beat your last run.
+        </p>
+      </header>
+
+      <!-- dashboard -->
+      <section class="stage mb-6" aria-label="Live stats">
+        <div class="grid grid-cols-3 gap-3 sm:gap-5">
+          <div class="glass p-4 text-center" style="--g: rgb(var(--c1)/0.4)">
+            <div class="text-xs text-slate-400">Speed</div>
+            <div
+              class="disp text-3xl sm:text-5xl font-bold t1"
+              style="text-shadow: 0 0 18px rgb(var(--c1) / 0.8)"
+              id="wpm"
+            >
+              0
+            </div>
+            <div class="text-xs text-slate-500">WPM</div>
+          </div>
+          <div
+            class="glass p-4 text-center flex flex-col items-center justify-center"
+            style="--g: rgb(var(--c2)/0.5)"
+          >
+            <div
+              class="relative w-20 h-20 sm:w-28 sm:h-28"
+              style="
+                --c: rgb(var(--c2));
+                animation: pulse 1.6s ease-in-out infinite;
+              "
+            >
+              <svg viewBox="0 0 100 100" class="w-full h-full -rotate-90">
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="44"
+                  fill="none"
+                  stroke="rgba(148,163,184,.18)"
+                  stroke-width="6"
+                />
+                <circle
+                  id="ring"
+                  cx="50"
+                  cy="50"
+                  r="44"
+                  fill="none"
+                  stroke="url(#g)"
+                  stroke-width="6"
+                  stroke-linecap="round"
+                  stroke-dasharray="276.5"
+                  stroke-dashoffset="0"
+                  style="transition: stroke-dashoffset 0.12s linear"
+                />
+                <defs>
+                  <linearGradient id="g">
+                    <stop offset="0" style="stop-color: rgb(var(--c1))" />
+                    <stop offset="1" style="stop-color: rgb(var(--c3))" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <div
+                class="absolute inset-0 flex items-center justify-center disp text-xl sm:text-3xl font-bold text-white"
+                id="time"
+              >
+                60
+              </div>
+            </div>
+          </div>
+          <div class="glass p-4 text-center" style="--g: rgb(var(--c3)/0.4)">
+            <div class="text-xs text-slate-400">Accuracy</div>
+            <div
+              class="disp text-3xl sm:text-5xl font-bold t3"
+              style="text-shadow: 0 0 18px rgb(var(--c3) / 0.8)"
+            >
+              <span id="acc">100</span
+              ><span class="text-xl sm:text-2xl">%</span>
+            </div>
+            <div class="text-xs text-slate-500">keystrokes</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- typing card -->
+      <section class="stage mb-6">
+        <div
+          class="glass tilt relative p-5 sm:p-8"
+          id="card"
+          style="--g: rgb(var(--c2)/0.45); --g2: rgb(var(--c1)/0.35)"
+        >
+          <div
+            class="lift relative overflow-hidden"
+            style="height: calc(3 * var(--lh))"
+          >
+            <div id="words" aria-live="off"></div>
+          </div>
+          <input
+            id="inp"
+            class="absolute inset-0 w-full h-full opacity-0 cursor-default"
+            autocomplete="off"
+            autocapitalize="off"
+            autocorrect="off"
+            spellcheck="false"
+            aria-label="Type the text shown here"
+          />
+          <div
+            id="hint"
+            class="lift t1 mt-4 text-center text-xs"
+            style="
+              animation: pulse 1.8s ease-in-out infinite;
+              --c: rgb(var(--c1));
+            "
+          >
+            Start typing to begin. The clock starts on your first key.
+          </div>
+        </div>
+      </section>
+
+      <!-- controls -->
+      <section class="flex flex-col items-center gap-4" aria-label="Options">
+        <div class="flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
+          <div
+            class="flex flex-wrap items-center justify-center gap-2"
+            id="timeOpts"
+            role="group"
+            aria-label="Duration"
+          >
+            <button class="btn" data-v="15">15s</button>
+            <button class="btn" data-v="30">30s</button>
+            <button class="btn on" data-v="60">60s</button>
+            <button class="btn" data-v="120">2m</button>
+            <label class="flex items-center gap-2 text-xs text-slate-400"
+              >Custom
+              <input
+                id="customTime"
+                class="field"
+                type="number"
+                min="5"
+                max="600"
+                step="1"
+                value="60"
+                inputmode="numeric"
+                aria-label="Custom time in seconds"
+              />
+              sec
+            </label>
+          </div>
+          <div
+            class="flex gap-2"
+            id="diffOpts"
+            role="group"
+            aria-label="Difficulty"
+          >
+            <button class="btn" data-v="easy">Easy</button>
+            <button class="btn on" data-v="normal">Normal</button>
+            <button class="btn" data-v="hard">Hard</button>
+          </div>
+          <button
+            class="btn flex items-center gap-2"
+            id="restart"
+            title="Restart (Tab)"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
+              <path d="M3 3v5h5" /></svg
+            >Restart
+          </button>
+        </div>
+
+        <div
+          class="flex flex-wrap items-center justify-center gap-3 text-xs text-slate-400"
+        >
+          <span>Theme</span>
+          <div class="flex gap-2" id="swatches"></div>
+          <span class="ml-2">Custom colors</span>
+          <div class="flex gap-2">
+            <input type="color" class="pick" id="p1" aria-label="Color 1" />
+            <input type="color" class="pick" id="p2" aria-label="Color 2" />
+            <input type="color" class="pick" id="p3" aria-label="Color 3" />
+          </div>
+        </div>
+      </section>
+      <p class="mt-5 text-center text-xs text-slate-500">
+        Tab restarts instantly. Personal best:
+        <span id="best" class="text-slate-300">0</span> WPM
+      </p>
+    </main>
+
+    <!-- end modal -->
+    <div id="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+      <div class="glass card w-full max-w-md p-7 text-center">
+        <div class="text-sm text-slate-400">Run complete</div>
+        <h2 id="mTitle" class="disp title text-2xl sm:text-3xl font-black mt-1">
+          Netrunner
+        </h2>
+        <div
+          class="disp text-7xl font-black text-white my-3"
+          style="
+            text-shadow:
+              0 0 30px rgb(var(--c1) / 0.9),
+              0 0 60px rgb(var(--c2) / 0.6);
+          "
+          id="mWpm"
+        >
+          0
+        </div>
+        <div class="text-xs text-slate-400 -mt-2 mb-5">words per minute</div>
+        <div class="grid grid-cols-2 gap-3 mb-3">
+          <div
+            class="rounded-2xl p-3"
+            style="
+              background: rgb(var(--c3) / 0.1);
+              border: 1px solid rgb(var(--c3) / 0.35);
+            "
+          >
+            <div class="disp text-2xl t3" id="mAcc">0%</div>
+            <div class="text-xs text-slate-400">Accuracy</div>
+          </div>
+          <div
+            class="rounded-2xl p-3"
+            style="
+              background: rgb(var(--c1) / 0.1);
+              border: 1px solid rgb(var(--c1) / 0.35);
+            "
+          >
+            <div class="disp text-2xl t1" id="mWords">0</div>
+            <div class="text-xs text-slate-400">Correct words</div>
+          </div>
+        </div>
+        <div id="mBest" class="text-xs text-slate-400 mb-6 h-4"></div>
+        <button class="btn go" id="again">Play again</button>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
