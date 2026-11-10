@@ -343,6 +343,12 @@ body {
   border-radius: 50%;
 }
 
+.vol {
+  width: 110px;
+  accent-color: rgb(var(--c1));
+  cursor: pointer;
+}
+
 /* modal */
 #modal {
   position: fixed;

@@ -45,6 +45,134 @@
       ? Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0")
       : String(s);
 
+  /* ---------- sound: synthesized with the Web Audio API (no audio files needed) ---------- */
+  const Sfx = (() => {
+    let ctx,
+      master,
+      on = true,
+      vol = 0.5;
+    try {
+      on = localStorage.getItem("synapse-sound") !== "off";
+      const v = parseFloat(localStorage.getItem("synapse-vol"));
+      if (v >= 0 && v <= 1) vol = v;
+    } catch (e) {}
+    function init() {
+      if (!ctx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return false;
+        ctx = new AC();
+        master = ctx.createGain();
+        master.gain.value = vol;
+        master.connect(ctx.destination);
+      }
+      if (ctx.state === "suspended") ctx.resume();
+      return true;
+    }
+    // one short beep: frequency f (optionally sliding to "to"), duration d, volume v, delay t
+    function tone({
+      f = 440,
+      to = null,
+      type = "sine",
+      d = 0.08,
+      v = 0.2,
+      t = 0,
+    }) {
+      if (!on || !init()) return;
+      const s = ctx.currentTime + t,
+        o = ctx.createOscillator(),
+        g = ctx.createGain();
+      o.type = type;
+      o.frequency.setValueAtTime(f, s);
+      if (to) o.frequency.exponentialRampToValueAtTime(to, s + d);
+      g.gain.setValueAtTime(v, s);
+      g.gain.exponentialRampToValueAtTime(0.0001, s + d);
+      o.connect(g);
+      g.connect(master);
+      o.start(s);
+      o.stop(s + d + 0.02);
+    }
+    return {
+      get on() {
+        return on;
+      },
+      get vol() {
+        return vol;
+      },
+      toggle() {
+        on = !on;
+        try {
+          localStorage.setItem("synapse-sound", on ? "on" : "off");
+        } catch (e) {}
+        if (on) this.click();
+        return on;
+      },
+      setVol(x) {
+        vol = x;
+        if (master) master.gain.value = x;
+        try {
+          localStorage.setItem("synapse-vol", x);
+        } catch (e) {}
+      },
+      key() {
+        tone({
+          f: 850 + Math.random() * 150,
+          to: 500,
+          type: "triangle",
+          d: 0.045,
+          v: 0.12,
+        });
+      }, // correct key
+      wrong() {
+        tone({ f: 160, to: 80, type: "sawtooth", d: 0.14, v: 0.14 });
+      }, // wrong key
+      back() {
+        tone({ f: 420, to: 300, d: 0.04, v: 0.08 });
+      }, // backspace
+      start() {
+        tone({ f: 523, type: "square", d: 0.09, v: 0.08 });
+        tone({ f: 784, type: "square", d: 0.12, v: 0.08, t: 0.09 });
+      },
+      tick() {
+        tone({ f: 1000, type: "square", d: 0.05, v: 0.07 });
+      }, // last 5 seconds
+      click() {
+        tone({ f: 600, to: 900, d: 0.07, v: 0.14 });
+      },
+      hover() {
+        tone({ f: 1300, d: 0.03, v: 0.035 });
+      },
+      win(best) {
+        [523, 659, 784, 1047].forEach((f, i) =>
+          tone({ f, type: "triangle", d: 0.25, v: 0.16, t: i * 0.11 }),
+        );
+        [523, 659, 784].forEach((f) => tone({ f, d: 0.9, v: 0.09, t: 0.5 }));
+        if (best)
+          [1319, 1568, 1976, 2637].forEach((f, i) =>
+            tone({ f, d: 0.2, v: 0.09, t: 0.75 + i * 0.07 }),
+          );
+      },
+    };
+  })();
+  let lastSec = -1;
+  const sndBtn = $("sndBtn"),
+    vol = $("vol");
+  const paintSnd = () => {
+    sndBtn.textContent = Sfx.on ? "🔊 On" : "🔇 Off";
+    sndBtn.classList.toggle("on", Sfx.on);
+  };
+  vol.value = Math.round(Sfx.vol * 100);
+  paintSnd();
+  sndBtn.addEventListener("click", () => {
+    Sfx.toggle();
+    paintSnd();
+    inp.focus();
+  });
+  vol.addEventListener("input", () => Sfx.setVol(vol.value / 100));
+  vol.addEventListener("change", () => {
+    Sfx.key();
+    inp.focus();
+  });
+
   /* ---------- theme ---------- */
   const rgb = (h) =>
     [1, 3, 5].map((i) => parseInt(h.substr(i, 2), 16)).join(" ");
@@ -130,6 +258,11 @@
   function tick() {
     const left = Math.max(0, dur - (performance.now() - t0) / 1000);
     $("time").textContent = fmt(Math.ceil(left));
+    const sec = Math.ceil(left);
+    if (sec !== lastSec) {
+      if (sec > 0 && sec <= 5) Sfx.tick();
+      lastSec = sec;
+    }
     $("ring").style.strokeDashoffset = 276.5 * (1 - left / dur);
     const s = stats();
     $("wpm").textContent = s.wpm;
@@ -143,13 +276,18 @@
       t0 = performance.now();
       timer = setInterval(tick, 100);
       $("hint").style.opacity = 0;
+      Sfx.start();
     }
     const v = inp.value;
     while (text.length - v.length < 80) addWords(15);
+    let lastOk = true;
     for (let i = typed.length; i < v.length; i++) {
       total++;
-      if (v[i] === text[i]) good++;
+      lastOk = v[i] === text[i];
+      if (lastOk) good++;
     }
+    if (v.length > typed.length) lastOk ? Sfx.key() : Sfx.wrong();
+    else if (v.length < typed.length) Sfx.back();
     typed = v;
     paint();
     tick();
@@ -178,6 +316,7 @@
       } catch (e) {}
     }
     $("best").textContent = best;
+    Sfx.win(isBest);
     $("mWpm").textContent = wpm;
     $("mAcc").textContent = s.acc + "%";
     $("mWords").textContent = cw;
@@ -219,6 +358,7 @@
     typed = text = "";
     total = good = 0;
     spans = [];
+    lastSec = -1;
     wordsEl.innerHTML = "";
     wordsEl.style.transform = "";
     inp.value = "";
@@ -288,6 +428,13 @@
     s.style.top = e.clientY - r.top + "px";
     b.appendChild(s);
     setTimeout(() => s.remove(), 650);
+  });
+  document.addEventListener("pointerdown", (e) => {
+    if (e.target.closest(".btn,.sw")) Sfx.click();
+  });
+  document.addEventListener("pointerover", (e) => {
+    const b = e.target.closest(".btn,.sw");
+    if (b && !b.contains(e.relatedTarget)) Sfx.hover();
   });
   $("restart").addEventListener("click", reset);
   $("again").addEventListener("click", reset);
